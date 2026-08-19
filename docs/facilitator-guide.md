@@ -83,6 +83,11 @@ This is the one that will bite you on the day. Every tool-capable model is **on-
 
 Warm it again if there is a long gap before the build phase.
 
+There's a second, different cold-start later, during Build, not here at
+launch: the `ori-ducklake` MCP server. Unlike the model, it's **per-sandbox**
+and can't be pre-warmed for the room — see the callout at the start of
+"0:25 to 0:50 — Build" below.
+
 ---
 
 ## Pre-flight (send 5 to 7 days ahead)
@@ -207,6 +212,12 @@ If `npx` is slow behind a proxy, move on. The skill is already vendored.
 ### 0:25 to 0:50 — Build (25 min)
 
 Mostly silent. You float.
+
+**Say this before anyone sends their first data question:**
+
+> The first time you ask something that touches real data, it may go quiet for a few minutes with no output at all. That's your sandbox setting up its connection to the data catalog for the first time — not a freeze, not an error. It only happens once. If someone's stuck longer than five minutes, flag me.
+
+This is a separate, per-sandbox cold-start from the model warm-up you already did — see "Warm the model before the room arrives" above. It cannot be pre-warmed for the room the same way; saying it out loud here is the mitigation.
 
 **Formative checks, built into the timing:**
 

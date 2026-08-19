@@ -193,6 +193,12 @@ cd ori-ai-crashcourse
 
 The script asks which agent you want. You are then inside the sandbox, talking to it. Type `/skills` to see what your agent already knows how to do.
 
+**The first time you ask a data question, expect a silent wait of up to a
+few minutes** — the `ori-ducklake` skill sets up its connection to the data
+catalog fresh in your sandbox, and it doesn't print anything while that's
+happening. This looks exactly like a freeze but isn't. It only happens
+once; after that first connection, it's fast for the rest of the session.
+
 ## Step 2: Decide what you want to see
 
 Write one sentence first, in your own words, before you type anything at the agent:
