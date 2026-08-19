@@ -6,6 +6,19 @@ it silently.
 
 ---
 
+**The agent looks frozen the first time you ask a data question — no
+response, no error, nothing**
+Normal. The `ori-ducklake` skill fetches and installs its MCP server fresh
+inside your sandbox the first time it's used, and that setup (a `git`
+fetch plus a Python environment install) prints nothing while it runs — it
+can take a few minutes, sometimes longer on a slow connection. This is a
+**per-sandbox** cost: unlike the AI Hub model warm-up, the facilitator
+cannot pre-warm this for you, since it happens inside your own sandbox, not
+a shared backend. It only happens once per sandbox — wait it out rather
+than restarting, since restarting just means paying the cost again. If it's
+genuinely still nothing after 5+ minutes, that's worth flagging to the
+facilitator rather than continuing to wait.
+
 **`git clone`/`git fetch`/`git push` inside the sandbox fails with `fatal:
 could not read Username for 'https://github.com': terminal prompts
 disabled`**
