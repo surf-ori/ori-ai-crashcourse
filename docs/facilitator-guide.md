@@ -93,6 +93,15 @@ Send participants the quickstart plus:
 - Their SURF AI Hub API key and its expiry date
 - A named cut-off: "reply with your ✅ screenshot by [date], or you go in the Codespaces lane"
 
+Participants work from their own **fork** of the repo, not the shared one
+directly — they don't have write access to `surf-ori/ori-ai-crashcourse`.
+The quickstart's Step 2 covers forking, and Step 3 has them create a GitHub
+personal access token (`sbx secret set github`) — this is required, not
+optional, even to clone a public repo through the sandbox's proxy. Both are
+new as of this write-up; if you're reusing older invitation text, make sure
+it mentions forking and the token, or people will silently hit a broken
+`ori-ducklake` skill and a failed `submit.sh` push mid-session.
+
 Hold one 30-minute optional drop-in two days before. Cap your own effort there.
 
 Track who has replied ✅. Chase at T-3 and T-1. Non-responders default to the fallback lane; tell them rather than asking again.
@@ -302,7 +311,7 @@ Then:
 - [ ] Both agent lanes tested end to end
 - [ ] Model warmed 10 to 15 minutes before start
 - [ ] Streaming tool calling re-verified if the enabled model list changed
-- [ ] Codespaces fallback launched successfully at least once
+- [ ] Codespaces fallback launched successfully at least once, with `SURF_AIHUB_API_KEY` set as a Codespaces secret at github.com/settings/codespaces *before* creating the codespace (it's only injected at container creation) — `./scripts/preflight.sh` now runs there too (no `sbx` required) and will catch a missing/bad key before the workshop, same as the sbx lane
 - [ ] `docs/ideas.md` spans operational, strategic and leadership questions, not just data quality
 - [ ] You have a plan for the person who arrives with nothing installed
 

@@ -21,7 +21,16 @@ pass() { printf '✅ %s\n' "$1"; }
 fail() { printf '❌ %s\n' "$1"; printf '   %s\n' "$2"; FAILED=1; }
 note() { printf '⚠️  %s\n' "$1"; printf '   %s\n' "$2"; }
 
-cleanup() { sbx rm --force "$SANDBOX_NAME" >/dev/null 2>&1 || true; }
+HAS_SBX=1
+if ! command -v sbx >/dev/null 2>&1; then
+  HAS_SBX=0
+fi
+
+cleanup() {
+  if [ "$HAS_SBX" -eq 1 ]; then
+    sbx rm --force "$SANDBOX_NAME" >/dev/null 2>&1 || true
+  fi
+}
 trap cleanup EXIT
 
 if [ "$AGENT" != "opencode" ] && [ "$AGENT" != "claude" ]; then
@@ -33,41 +42,56 @@ fi
 echo "Checking your setup for the $AGENT lane..."
 echo ""
 
-# 1. sbx on PATH and logged in
-if command -v sbx >/dev/null 2>&1 && sbx ls >/dev/null 2>&1; then
-  pass "sbx installed and logged in"
-else
-  fail "sbx installed and logged in" "Install Docker Sandboxes and run 'sbx login'. See docs/participant-quickstart.md Step 1."
-  echo ""
-  echo "Cannot continue without sbx. Fix this first, then run this script again."
-  exit 1
-fi
+if [ "$HAS_SBX" -eq 1 ]; then
+  # 1. sbx on PATH and logged in
+  if sbx ls >/dev/null 2>&1; then
+    pass "sbx installed and logged in"
+  else
+    fail "sbx installed and logged in" "Install Docker Sandboxes and run 'sbx login'. See docs/participant-quickstart.md Step 1."
+    echo ""
+    echo "Cannot continue without sbx. Fix this first, then run this script again."
+    exit 1
+  fi
 
-# 2. a sandbox starts
-if sbx create --name "$SANDBOX_NAME" "$AGENT" . >/dev/null 2>&1; then
-  pass "sandbox starts"
-else
-  fail "sandbox starts" "Could not create a sandbox. Run 'sbx run $AGENT' by hand in this folder to see the real error."
-  exit 1
-fi
+  # 2. a sandbox starts
+  if sbx create --name "$SANDBOX_NAME" "$AGENT" . >/dev/null 2>&1; then
+    pass "sandbox starts"
+  else
+    fail "sandbox starts" "Could not create a sandbox. Run 'sbx run $AGENT' by hand in this folder to see the real error."
+    exit 1
+  fi
 
-run_in_sandbox() {
-  sbx exec "$SANDBOX_NAME" bash -lc "$1"
-}
+  run_in_sandbox() {
+    sbx exec "$SANDBOX_NAME" bash -lc "$1"
+  }
+
+  KEY_HINT="Run 'sbx secret set-custom --host willma.surf.nl --env SURF_AIHUB_API_KEY' and paste the key from your invitation email."
+else
+  # No sbx here -- most likely Codespaces or another devcontainer, which is
+  # already an isolated environment. Run the remaining checks directly
+  # instead of via a sandbox.
+  note "no sbx found" "Running checks directly against this environment -- this looks like Codespaces or another devcontainer, which is already isolated. Skipping the sbx-specific checks."
+
+  run_in_sandbox() {
+    bash -lc "$1"
+  }
+
+  KEY_HINT='Add SURF_AIHUB_API_KEY as a Codespaces secret at https://github.com/settings/codespaces, then rebuild the container (Command Palette -> "Codespaces: Rebuild Container").'
+fi
 
 # 3 & 4. agent choice + credentials present for the chosen lane
 if [ "$AGENT" = "opencode" ]; then
   if run_in_sandbox 'test -n "${SURF_AIHUB_API_KEY:-}"' >/dev/null 2>&1; then
     pass "SURF AI Hub key found"
   else
-    fail "SURF AI Hub key found" "Run 'sbx secret set SURF_AIHUB_API_KEY' and paste the key from your invitation email."
+    fail "SURF AI Hub key found" "$KEY_HINT"
     exit 1
   fi
 else
   if run_in_sandbox 'command -v claude >/dev/null 2>&1' >/dev/null 2>&1; then
     pass "Claude Code found (sign in with your own subscription the first time you run it)"
   else
-    fail "Claude Code found" "Claude Code isn't available inside the sandbox. See docs/troubleshooting.md."
+    fail "Claude Code found" "Claude Code isn't available. See docs/troubleshooting.md."
     exit 1
   fi
 fi
@@ -126,6 +150,21 @@ if [ "$SKILL_COUNT" -eq "$EXPECTED_SKILLS" ]; then
   pass "skills loaded ($SKILL_COUNT)"
 else
   fail "skills loaded ($SKILL_COUNT)" "Expected $EXPECTED_SKILLS skills in .claude/skills/. Try a fresh 'git clone' — see docs/troubleshooting.md."
+fi
+
+# 7b. git can actually reach GitHub from inside the sandbox. The sandbox's
+# network proxy needs a "github" secret configured before *any* git-over-
+# HTTPS traffic works -- even a plain clone of a public repo fails without
+# one. This is what the ori-ducklake MCP server and submit.sh's git push
+# both depend on.
+if run_in_sandbox 'GIT_TERMINAL_PROMPT=0 timeout 20 git ls-remote https://github.com/surf-ori/agentic-tools >/dev/null 2>&1'; then
+  pass "git can reach GitHub from inside the sandbox"
+else
+  if [ "$HAS_SBX" -eq 1 ]; then
+    fail "git can reach GitHub from inside the sandbox" "Run 'sbx secret set github' and paste a GitHub personal access token (repo scope, from https://github.com/settings/tokens/new). Needed for the ori-ducklake MCP server and for submit.sh's git push."
+  else
+    fail "git can reach GitHub from inside the sandbox" "Codespaces should authenticate git automatically. See docs/troubleshooting.md."
+  fi
 fi
 
 # 8. git present, github.com reachable
