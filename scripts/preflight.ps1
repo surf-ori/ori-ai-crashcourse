@@ -91,7 +91,7 @@ try {
         if ($keyPresent) {
             Write-Pass "SURF AI Hub key found"
         } else {
-            Write-Fail "SURF AI Hub key found" "Run 'sbx secret set SURF_AIHUB_API_KEY' and paste the key from your invitation email."
+            Write-Fail "SURF AI Hub key found" "Run 'sbx secret set-custom --host willma.surf.nl --env SURF_AIHUB_API_KEY' and paste the key from your invitation email."
             exit 1
         }
     } else {

@@ -302,7 +302,7 @@ Then:
 - [ ] Both agent lanes tested end to end
 - [ ] Model warmed 10 to 15 minutes before start
 - [ ] Streaming tool calling re-verified if the enabled model list changed
-- [ ] Codespaces fallback launched successfully at least once
+- [ ] Codespaces fallback launched successfully at least once, with `SURF_AIHUB_API_KEY` set as a Codespaces secret at github.com/settings/codespaces *before* creating the codespace (it's only injected at container creation) — `./scripts/preflight.sh` now runs there too (no `sbx` required) and will catch a missing/bad key before the workshop, same as the sbx lane
 - [ ] `docs/ideas.md` spans operational, strategic and leadership questions, not just data quality
 - [ ] You have a plan for the person who arrives with nothing installed
 

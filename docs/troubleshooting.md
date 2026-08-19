@@ -6,6 +6,17 @@ it silently.
 
 ---
 
+**On Windows, running `./scripts/preflight.sh` pops up "How do you want to
+open this file?"**
+You're typing the command into PowerShell or cmd — neither can run bash
+scripts, so Windows falls back to asking which app should open the `.sh`
+file. Install [Git for Windows](https://git-scm.com/downloads/win) if you
+haven't, then open a **Git Bash** window specifically (Start menu → "Git
+Bash", or right-click the repo folder in File Explorer → "Git Bash Here")
+and run the command there instead. `preflight.ps1` is the only script with a
+PowerShell equivalent — `start.sh`, `submit.sh`, and `new-notebook.sh` need
+Git Bash (or WSL2).
+
 **`sbx` says my hardware isn't supported / won't install**
 Docker Sandboxes needs macOS on Apple Silicon, Linux x86_64 with KVM, or
 Windows 11 x86_64. Intel Macs and locked-down managed Windows laptops will
@@ -21,12 +32,47 @@ loops a second time, check you're not behind a proxy that blocks
 `docker.com` — if you are, use the Codespaces fallback instead of fighting
 the proxy.
 
-**Preflight says the key was rejected**
-Your `SURF_AIHUB_API_KEY` has either expired or was mistyped. Re-run
-`sbx secret set SURF_AIHUB_API_KEY` and paste the key fresh from your
-invitation email — no extra spaces or quotes. If it's still rejected after
-that, the key has likely expired; check the date in your invitation email
-and ask the facilitator for a new one.
+**Preflight says the key was rejected, or `SURF_AIHUB_API_KEY` never shows up
+inside the sandbox**
+Your `SURF_AIHUB_API_KEY` has either expired, was mistyped, or was set with
+the wrong `sbx` subcommand. This key uses **`sbx secret set-custom`**, not
+plain `sbx secret set` — the SURF AI Hub isn't one of Docker's built-in
+providers (`anthropic`, `github`, `openai`, etc.), so the proxy needs an
+explicit host to match against. If you ever ran `sbx secret set
+SURF_AIHUB_API_KEY` (without `-custom`), that secret is a dead end: it's
+stored, but nothing ever delivers it into a sandbox or matches it to any
+outbound request. Clear it out and redo it correctly:
+
+```bash
+sbx secret rm SURF_AIHUB_API_KEY
+sbx secret set-custom --host willma.surf.nl --env SURF_AIHUB_API_KEY
+```
+
+Paste the key fresh from your invitation email — no extra spaces or quotes.
+If it's still rejected after that, the key has likely expired; check the
+date in your invitation email and ask the facilitator for a new one.
+
+**`sbx secret set-custom` shows nothing when I paste — did it work?**
+Yes, that's expected: the "Enter secret:" prompt masks input completely, no
+`*` and no cursor movement. It should then print something like `Saved
+custom secret placeholder "sbx-cs-..." for target "willma.surf.nl" env
+"SURF_AIHUB_API_KEY"`. If you want to confirm before running preflight, run
+`sbx secret ls` and look for a `SURF_AIHUB_API_KEY` row — that's
+non-destructive, unlike re-running `set-custom`, which would generate a new
+placeholder and require restarting any sandbox you already have open. The
+authoritative check either way is `./scripts/preflight.sh` — it fails
+outright on a missing or bad key.
+
+**In a Codespace, a call to `willma.surf.nl` returns curl exit code `000`**
+`000` means curl never got a response at all — not an auth failure, a
+connection failure. This can happen if your GitHub organization runs a
+Codespaces network firewall/allowlist that blocks egress to hosts outside a
+default list, and `willma.surf.nl` isn't on it. This is **not yet confirmed
+as the cause** — it could also be a transient network issue or a cold model
+needing longer than curl's default wait. If you hit this, tell the
+facilitator with the exact command and output; it may need your GitHub org
+admin to add `willma.surf.nl` to the Codespaces allowlist, which is outside
+what you can fix from inside the Codespace.
 
 **Preflight says the model isn't responding, or lists it as unavailable**
 The model may not be enabled on your collaboration's AI Hub key, or the

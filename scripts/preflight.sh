@@ -21,7 +21,16 @@ pass() { printf '✅ %s\n' "$1"; }
 fail() { printf '❌ %s\n' "$1"; printf '   %s\n' "$2"; FAILED=1; }
 note() { printf '⚠️  %s\n' "$1"; printf '   %s\n' "$2"; }
 
-cleanup() { sbx rm --force "$SANDBOX_NAME" >/dev/null 2>&1 || true; }
+HAS_SBX=1
+if ! command -v sbx >/dev/null 2>&1; then
+  HAS_SBX=0
+fi
+
+cleanup() {
+  if [ "$HAS_SBX" -eq 1 ]; then
+    sbx rm --force "$SANDBOX_NAME" >/dev/null 2>&1 || true
+  fi
+}
 trap cleanup EXIT
 
 if [ "$AGENT" != "opencode" ] && [ "$AGENT" != "claude" ]; then
@@ -33,41 +42,56 @@ fi
 echo "Checking your setup for the $AGENT lane..."
 echo ""
 
-# 1. sbx on PATH and logged in
-if command -v sbx >/dev/null 2>&1 && sbx ls >/dev/null 2>&1; then
-  pass "sbx installed and logged in"
-else
-  fail "sbx installed and logged in" "Install Docker Sandboxes and run 'sbx login'. See docs/participant-quickstart.md Step 1."
-  echo ""
-  echo "Cannot continue without sbx. Fix this first, then run this script again."
-  exit 1
-fi
+if [ "$HAS_SBX" -eq 1 ]; then
+  # 1. sbx on PATH and logged in
+  if sbx ls >/dev/null 2>&1; then
+    pass "sbx installed and logged in"
+  else
+    fail "sbx installed and logged in" "Install Docker Sandboxes and run 'sbx login'. See docs/participant-quickstart.md Step 1."
+    echo ""
+    echo "Cannot continue without sbx. Fix this first, then run this script again."
+    exit 1
+  fi
 
-# 2. a sandbox starts
-if sbx create --name "$SANDBOX_NAME" "$AGENT" . >/dev/null 2>&1; then
-  pass "sandbox starts"
-else
-  fail "sandbox starts" "Could not create a sandbox. Run 'sbx run $AGENT' by hand in this folder to see the real error."
-  exit 1
-fi
+  # 2. a sandbox starts
+  if sbx create --name "$SANDBOX_NAME" "$AGENT" . >/dev/null 2>&1; then
+    pass "sandbox starts"
+  else
+    fail "sandbox starts" "Could not create a sandbox. Run 'sbx run $AGENT' by hand in this folder to see the real error."
+    exit 1
+  fi
 
-run_in_sandbox() {
-  sbx exec "$SANDBOX_NAME" bash -lc "$1"
-}
+  run_in_sandbox() {
+    sbx exec "$SANDBOX_NAME" bash -lc "$1"
+  }
+
+  KEY_HINT="Run 'sbx secret set-custom --host willma.surf.nl --env SURF_AIHUB_API_KEY' and paste the key from your invitation email."
+else
+  # No sbx here -- most likely Codespaces or another devcontainer, which is
+  # already an isolated environment. Run the remaining checks directly
+  # instead of via a sandbox.
+  note "no sbx found" "Running checks directly against this environment -- this looks like Codespaces or another devcontainer, which is already isolated. Skipping the sbx-specific checks."
+
+  run_in_sandbox() {
+    bash -lc "$1"
+  }
+
+  KEY_HINT='Add SURF_AIHUB_API_KEY as a Codespaces secret at https://github.com/settings/codespaces, then rebuild the container (Command Palette -> "Codespaces: Rebuild Container").'
+fi
 
 # 3 & 4. agent choice + credentials present for the chosen lane
 if [ "$AGENT" = "opencode" ]; then
   if run_in_sandbox 'test -n "${SURF_AIHUB_API_KEY:-}"' >/dev/null 2>&1; then
     pass "SURF AI Hub key found"
   else
-    fail "SURF AI Hub key found" "Run 'sbx secret set SURF_AIHUB_API_KEY' and paste the key from your invitation email."
+    fail "SURF AI Hub key found" "$KEY_HINT"
     exit 1
   fi
 else
   if run_in_sandbox 'command -v claude >/dev/null 2>&1' >/dev/null 2>&1; then
     pass "Claude Code found (sign in with your own subscription the first time you run it)"
   else
-    fail "Claude Code found" "Claude Code isn't available inside the sandbox. See docs/troubleshooting.md."
+    fail "Claude Code found" "Claude Code isn't available. See docs/troubleshooting.md."
     exit 1
   fi
 fi

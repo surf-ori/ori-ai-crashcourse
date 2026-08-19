@@ -30,20 +30,10 @@ fi
 
 echo "$AGENT" > "$AGENT_FILE"
 
-if ! command -v sbx >/dev/null 2>&1; then
-  # No sbx here -- most likely a Codespace or other devcontainer, which is
-  # already an isolated environment on its own. Skip the sbx-based
-  # preflight (it would just fail on "sbx installed") and launch the
-  # agent directly instead.
-  echo "sbx not found -- running $AGENT directly (this looks like Codespaces"
-  echo "or another devcontainer, which is already isolated)."
-  echo ""
-  echo "You're about to enter $AGENT."
-  echo "Once inside, type /skills to see what your agent already knows how to do."
-  echo ""
-  exec "$AGENT"
-fi
-
+# preflight.sh runs its checks directly (no sandbox) when sbx isn't found --
+# e.g. Codespaces or another devcontainer, which is already isolated. Either
+# way, run it: it's the only thing that verifies the AI Hub key actually
+# works before you're mid-conversation with the agent.
 echo "Checking your setup..."
 PREFLIGHT_LOG=$(mktemp)
 if ! ./scripts/preflight.sh "$AGENT" > "$PREFLIGHT_LOG" 2>&1; then
@@ -58,8 +48,12 @@ fi
 rm -f "$PREFLIGHT_LOG"
 echo "Setup looks good."
 echo ""
-echo "You're about to enter the sandbox running $AGENT."
+echo "You're about to enter $AGENT."
 echo "Once inside, type /skills to see what your agent already knows how to do."
 echo ""
 
-exec sbx run "$AGENT" .
+if command -v sbx >/dev/null 2>&1; then
+  exec sbx run "$AGENT" .
+else
+  exec "$AGENT"
+fi

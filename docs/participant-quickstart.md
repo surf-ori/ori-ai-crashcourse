@@ -64,6 +64,21 @@ sbx login
 
 When it asks about a network policy, choose **Open** for this workshop.
 
+**Windows 11 also needs a bash shell — this is not optional.** Every script in
+this repo (`preflight.sh`, `start.sh`, `submit.sh`, `new-notebook.sh`) is a
+bash script. PowerShell and cmd cannot run them; if you type
+`./scripts/preflight.sh` into PowerShell, Windows will pop up a "How do you
+want to open this file?" dialog instead of running it — that dialog means
+you're in the wrong shell, not that anything is broken.
+
+Install [Git for Windows](https://git-scm.com/downloads/win) — it bundles
+**Git Bash**. Then, for every command below, open a *Git Bash* window
+specifically (Start menu → "Git Bash", or right-click inside the repo folder
+in File Explorer → "Git Bash Here") rather than typing into PowerShell or
+cmd. A PowerShell port exists only for `preflight.ps1`; the other three
+scripts have no PowerShell equivalent, so Git Bash is the one shell that
+gets you through the whole workshop.
+
 ## Step 2: Get the workshop repository
 
 ```bash
@@ -76,10 +91,36 @@ Everything is already in there: the skills, the settings, the notebook template.
 ## Step 3: Add your API key
 
 ```bash
-sbx secret set SURF_AIHUB_API_KEY
+sbx secret set-custom --host willma.surf.nl --env SURF_AIHUB_API_KEY
 ```
 
-Paste the key when prompted. It is stored by the sandbox, not in the repository.
+This is a **custom** secret (`set-custom`, not `set`) because the SURF AI Hub
+isn't one of Docker's built-in providers. `--host willma.surf.nl` tells the
+sandbox's network proxy which outbound requests should get your key attached;
+`--env SURF_AIHUB_API_KEY` is the variable name `opencode.json` expects to
+find it under.
+
+Paste the key when prompted. **You won't see anything happen** — no `*`, no cursor
+movement, nothing echoed back. That's the terminal masking your input, not a
+frozen prompt. Paste (or type) the key and press Enter. You'll then see
+something like:
+
+```
+Enter secret:
+Saved custom secret placeholder "sbx-cs-xxxxxxxxxxxxxxxx" for target "willma.surf.nl" env "SURF_AIHUB_API_KEY" in scope "(global)"
+```
+
+That "placeholder" string is expected and correct — it's *not* your real key.
+Inside a sandbox, `$SURF_AIHUB_API_KEY` holds this placeholder; the proxy
+swaps it for your real key only on outbound requests to `willma.surf.nl`. The
+real key is never exposed inside the sandbox itself.
+
+Not sure it registered? `sbx secret ls` lists it non-destructively — look for
+a `SURF_AIHUB_API_KEY` row. The real check either way is
+`./scripts/preflight.sh` in the next step, which fails outright on a missing
+or bad key.
+
+It is stored by the sandbox, not in the repository.
 
 **Never paste this key into a file inside the repository.** If you commit it by accident, tell the facilitator immediately so it can be revoked.
 
