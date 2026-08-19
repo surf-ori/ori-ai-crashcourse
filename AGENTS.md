@@ -23,6 +23,17 @@ header, the WASM `micropip` guard, and a working first query wired up.
 Slugs are lowercase, hyphenated, no spaces: `dutch-institution-count`, not
 `Dutch Institution Count` or `dutch_institution_count`.
 
+When telling the participant how to preview their notebook, always say
+`uvx marimo edit notebooks/<slug>/notebook.py`, for **them** to run in their
+own sandbox session — never bare `marimo edit ...`, and don't run it
+yourself via your own shell tool (it starts a long-running server and would
+just hang the tool call). Nothing in the sandbox has `marimo` on `PATH`
+directly; it only exists as a `uvx`-managed ephemeral install driven by the
+PEP 723 header. A participant who copies a bare `marimo edit` command into
+their own *host* terminal will get `command not found`, since their host
+has no Python tooling installed at all — that's expected, not a bug to
+chase.
+
 ## Skills live in `.claude/skills/`, and only there
 
 This is a deliberate departure from `.agents/skills/`, which sibling repos
