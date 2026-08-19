@@ -1,0 +1,41 @@
+name: Validate notebooks
+
+# Advisory only, deliberately. A red X on a beginner's first pull request
+# is a bad teaching moment -- nothing here is a required status check.
+on:
+  pull_request:
+    paths:
+      - "notebooks/**/notebook.py"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Find changed notebooks
+        id: changed
+        run: |
+          FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'notebooks/**/notebook.py')
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$FILES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: ruff check
+        if: steps.changed.outputs.files != ''
+        continue-on-error: true
+        run: |
+          echo "${{ steps.changed.outputs.files }}" | xargs -r uvx ruff check
+
+      - name: marimo check
+        if: steps.changed.outputs.files != ''
+        continue-on-error: true
+        run: |
+          for f in ${{ steps.changed.outputs.files }}; do
+            uvx marimo check "$f"
+          done
