@@ -1,0 +1,61 @@
+name: Workshop idea
+description: >-
+  Use this if submit.sh failed and you couldn't open a pull request.
+  Works fine from your phone -- your idea gets captured either way.
+title: "[idea] "
+labels: ["workshop-idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Didn't manage to get a pull request open? No problem -- fill in
+        what you have. A half-finished idea captured here is better than
+        a finished one lost when the session ended.
+
+  - type: input
+    id: question
+    attributes:
+      label: Your question
+      description: One sentence. "I wanted to see ___ for ___, so that ___."
+      placeholder: I wanted to see how many of our publications have a funder DOI, so that I could brief the board on our NWO compliance.
+    validations:
+      required: true
+
+  - type: input
+    id: name
+    attributes:
+      label: Your name
+    validations:
+      required: true
+
+  - type: input
+    id: github
+    attributes:
+      label: Your GitHub handle (optional)
+    validations:
+      required: false
+
+  - type: textarea
+    id: sources
+    attributes:
+      label: Data sources
+      description: Which tables did this touch, if you got that far? (openalex.*, openaire.*, cris.*, openapc.*)
+    validations:
+      required: false
+
+  - type: textarea
+    id: notebook
+    attributes:
+      label: Notebook code or notes
+      description: Paste whatever you have -- a full notebook.py, a partial query, or just notes on what you were trying to build.
+      render: python
+    validations:
+      required: false
+
+  - type: textarea
+    id: blocker
+    attributes:
+      label: What went wrong
+      description: What stopped you from submitting normally?
+    validations:
+      required: false
