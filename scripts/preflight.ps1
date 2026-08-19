@@ -157,6 +157,22 @@ try {
         Write-Fail "skills loaded ($skillCount)" "Expected $ExpectedSkills skills in .claude\skills\. Try a fresh 'git clone' -- see docs\troubleshooting.md."
     }
 
+    # 7b. git can actually reach GitHub from inside the sandbox. The sandbox's
+    # network proxy needs a "github" secret configured before any git-over-
+    # HTTPS traffic works -- even a plain clone of a public repo fails
+    # without one.
+    $sandboxGitOk = $false
+    try {
+        Invoke-InSandbox 'GIT_TERMINAL_PROMPT=0 timeout 20 git ls-remote https://github.com/surf-ori/agentic-tools >/dev/null 2>&1' | Out-Null
+        $sandboxGitOk = $true
+    } catch { $sandboxGitOk = $false }
+
+    if ($sandboxGitOk) {
+        Write-Pass "git can reach GitHub from inside the sandbox"
+    } else {
+        Write-Fail "git can reach GitHub from inside the sandbox" "Run 'sbx secret set github' and paste a GitHub personal access token (repo scope, from https://github.com/settings/tokens/new). Needed for the ori-ducklake MCP server and for submit.sh's git push."
+    }
+
     # 8. git present, github.com reachable
     $gitOk = [bool](Get-Command git -ErrorAction SilentlyContinue)
     $githubOk = $false

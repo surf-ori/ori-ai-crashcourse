@@ -79,16 +79,42 @@ cmd. A PowerShell port exists only for `preflight.ps1`; the other three
 scripts have no PowerShell equivalent, so Git Bash is the one shell that
 gets you through the whole workshop.
 
-## Step 2: Get the workshop repository
+## Step 2: Fork and clone the workshop repository
+
+Go to https://github.com/surf-ori/ori-ai-crashcourse and click **Fork**
+(top right) — this makes your own copy under your GitHub account. You'll
+push your notebook there at the end and open a pull request from it; you
+don't have write access to the shared repo directly.
+
+Then clone **your fork** (replace `YOUR-USERNAME`):
 
 ```bash
-git clone https://github.com/surf-ori/ori-ai-crashcourse.git
+git clone https://github.com/YOUR-USERNAME/ori-ai-crashcourse.git
 cd ori-ai-crashcourse
 ```
 
 Everything is already in there: the skills, the settings, the notebook template. You do not need to install skills one by one.
 
-## Step 3: Add your API key
+## Step 3: Add your credentials
+
+**A GitHub token, first.** The sandbox's network proxy needs one to let *any*
+`git` command reach `github.com` from inside the sandbox — even a plain
+`git clone` of a public repo fails without it. You'll need this both for the
+`ori-ducklake` data skill (which fetches its MCP server from GitHub the
+first time you use it) and for `submit.sh`'s `git push` at the end.
+
+Create a token at https://github.com/settings/tokens/new — classic token,
+**`repo`** scope is enough (that's what lets you push to your own fork).
+Then:
+
+```bash
+sbx secret set github
+```
+
+Paste the token when prompted (same silent-input behavior as below — nothing
+echoes back, that's normal).
+
+**Then your AI Hub key:**
 
 ```bash
 sbx secret set-custom --host willma.surf.nl --env SURF_AIHUB_API_KEY

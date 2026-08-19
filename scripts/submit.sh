@@ -65,10 +65,21 @@ if git push -u origin "$BRANCH" 2>/dev/null; then
   PUSHED=1
 fi
 
-REMOTE_URL=$(git remote get-url origin 2>/dev/null | sed -E 's/\.git$//; s#^git@github\.com:#https://github.com/#')
+# origin is your fork (see docs/participant-quickstart.md Step 2), not the
+# shared repo -- derive the fork owner from it so the fallback PR link
+# compares against the upstream repo, not your own fork.
+UPSTREAM="https://github.com/surf-ori/ori-ai-crashcourse"
+ORIGIN_URL=$(git remote get-url origin 2>/dev/null || true)
+FORK_OWNER=$(printf '%s' "$ORIGIN_URL" | sed -E 's#^(https://github\.com/|git@github\.com:)([^/]+)/.*#\2#')
 
 if [ "$PUSHED" -eq 1 ] && command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
   gh pr create --fill && exit 0
+fi
+
+if [ -n "$FORK_OWNER" ] && [ "$FORK_OWNER" != "surf-ori" ]; then
+  COMPARE_URL="${UPSTREAM}/compare/main...${FORK_OWNER}:${BRANCH}?expand=1"
+else
+  COMPARE_URL="${UPSTREAM}/compare/${BRANCH}?expand=1"
 fi
 
 echo ""
@@ -77,7 +88,7 @@ if [ "$PUSHED" -eq 0 ]; then
   echo "  git push -u origin $BRANCH"
 fi
 echo "Open a pull request by hand at:"
-echo "  ${REMOTE_URL}/compare/${BRANCH}?expand=1"
+echo "  ${COMPARE_URL}"
 echo ""
 echo "If that doesn't work either, use the 'Workshop idea' issue template on your"
 echo "phone instead and paste your notebook in. Your idea gets captured either way."

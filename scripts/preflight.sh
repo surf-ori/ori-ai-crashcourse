@@ -152,6 +152,21 @@ else
   fail "skills loaded ($SKILL_COUNT)" "Expected $EXPECTED_SKILLS skills in .claude/skills/. Try a fresh 'git clone' — see docs/troubleshooting.md."
 fi
 
+# 7b. git can actually reach GitHub from inside the sandbox. The sandbox's
+# network proxy needs a "github" secret configured before *any* git-over-
+# HTTPS traffic works -- even a plain clone of a public repo fails without
+# one. This is what the ori-ducklake MCP server and submit.sh's git push
+# both depend on.
+if run_in_sandbox 'GIT_TERMINAL_PROMPT=0 timeout 20 git ls-remote https://github.com/surf-ori/agentic-tools >/dev/null 2>&1'; then
+  pass "git can reach GitHub from inside the sandbox"
+else
+  if [ "$HAS_SBX" -eq 1 ]; then
+    fail "git can reach GitHub from inside the sandbox" "Run 'sbx secret set github' and paste a GitHub personal access token (repo scope, from https://github.com/settings/tokens/new). Needed for the ori-ducklake MCP server and for submit.sh's git push."
+  else
+    fail "git can reach GitHub from inside the sandbox" "Codespaces should authenticate git automatically. See docs/troubleshooting.md."
+  fi
+fi
+
 # 8. git present, github.com reachable
 if command -v git >/dev/null 2>&1 && curl -s -o /dev/null -m 10 https://github.com; then
   pass "git and GitHub reachable"
