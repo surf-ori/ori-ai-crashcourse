@@ -261,6 +261,16 @@ Talk to the agent. Some things that work well:
 | "Make it better" | "Run the notebook and show me the error." |
 | Nothing, when lost | "Explain what this cell does, in plain language." |
 
+**Watch it update live.** Ask the agent to run `uvx marimo edit --sandbox --watch notebooks/<your-slug>/notebook.py` — it prints a URL. Open that in your browser and leave the tab up. From then on, every cell in the notebook has a name (`dutch_institutions_query`, `funding_chart`, and so on), so you can say *"change the query in the `funding_chart` cell to sort by year instead"* and the agent edits the file directly — `--watch` reloads the open tab on its own the moment the file changes, no copy-pasting code back and forth. This runs inside your sandbox, same as the agent itself; if the URL doesn't load in your host browser, see `docs/troubleshooting.md`.
+
+**See what a reader would see.** `marimo edit` always shows you the code alongside the output — useful while building, but not what you're actually shipping. To check what someone opening your dashboard cold would see (no code, no edit controls, just the charts and tables), run:
+
+```bash
+uvx marimo run --sandbox notebooks/<your-slug>/notebook.py
+```
+
+This is "app mode" — it's the same read-only view your exported HTML/WASM dashboard will have. Good final check before Step 5: if a heading is missing or a chart has no axis labels, this is where you'll notice.
+
 **You are the reviewer.** The agent is fast and confident and will sometimes be confidently wrong: an invented column name, a ROR that resolves to the wrong institution, a count that is off by an order of magnitude. You know what a plausible number looks like for your institution. It does not. That knowledge is why you are in the room.
 
 If your question is strategic, expect a second problem: the data may not directly answer it. There is no "SDG" column, and no "knowledge security risk" field. You will be working with proxies, and the agent will happily present a proxy as if it were the real thing. When that happens, say so in the notebook: *"this uses topic classifications as a stand-in for SDG alignment, which under-counts X."* Naming the proxy is a stronger result than hiding it.
@@ -306,5 +316,5 @@ If that script fails, open a GitHub issue using the "Workshop idea" template and
 | Submit | `./scripts/submit.sh` |
 | Skills you have | `/skills` inside your agent |
 | Install a skill | `npx skills add owner/repo --agent claude-code --copy --yes` |
-| Preview a notebook | `uvx marimo edit notebooks/<name>/notebook.py` |
+| Preview a notebook | `uvx marimo edit --sandbox --watch notebooks/<name>/notebook.py` |
 | Something broke | `docs/troubleshooting.md` |

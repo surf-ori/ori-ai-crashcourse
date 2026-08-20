@@ -65,6 +65,23 @@ want a clean check — delete the cache file and `start.sh` will run
 rm .ori-preflight
 ```
 
+**`uvx marimo edit --sandbox --watch notebooks/<slug>/notebook.py` prints
+a `localhost` URL, but it won't load in your host browser**
+The preview server runs inside your sandbox, not on your host machine, so
+`localhost:2718` means the sandbox's own loopback — your host has no idea
+that port exists yet. Publish it from a **second terminal on your host**
+(not inside the sandbox session where the agent is running):
+
+```bash
+sbx ports <your-sandbox-name> --publish 2718:2718
+```
+
+Find `<your-sandbox-name>` from inside the sandbox with `echo $SANDBOX_VM_ID`
+or `hostname`. Then reload `http://localhost:2718` in your host browser.
+If marimo printed a different port (it picks a free one if 2718 is taken),
+publish that one instead. This is a one-time step per sandbox session, not
+per notebook.
+
 **Ctrl-C to copy the agent's reply quit the whole session instead**
 Don't use Ctrl-C inside the agent — it's the terminal interrupt signal, and
 it looks like it kills the sandbox attach (`sbx run`) rather than just

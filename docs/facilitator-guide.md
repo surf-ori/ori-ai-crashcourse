@@ -307,7 +307,7 @@ Then:
 ## After the session
 
 - Triage PRs within a week while it is warm. Merge generously; a rough notebook that renders is a win.
-- **To actually run a submission before merging** (not just read the diff): each participant's branch lives on their own fork, not in this repo, so `git branch -a` here won't show it. Pull it down with `gh pr checkout <PR-number>`, then `uvx marimo edit notebooks/<slug>/notebook.py` to try it. `git checkout main` when done; `git branch -D <branch>` to drop your local copy (safe — it only removes your local test branch, not the contributor's fork or the PR).
+- **To actually run a submission before merging** (not just read the diff): each participant's branch lives on their own fork, not in this repo, so `git branch -a` here won't show it. Pull it down with `gh pr checkout <PR-number>`, then `uvx marimo edit --sandbox notebooks/<slug>/notebook.py` to try it — `--sandbox` is required, not optional: without it marimo skips the notebook's own PEP 723 dependencies and any real query cell fails with `ModuleNotFoundError` the moment you open it. `git checkout main` when done; `git branch -D <branch>` to drop your local copy (safe — it only removes your local test branch, not the contributor's fork or the PR).
 - Anything unfinished becomes a GitHub issue with the author tagged, not a dead branch.
 - **Note which questions clustered, and which tier they came from.** If the room reached for strategic questions and the data could not support them, that is a finding about the ORI monitor roadmap, and probably the most valuable output of the hour.
 - Note where the pre-loaded skills failed to help. Those gaps are the next skills to write.
