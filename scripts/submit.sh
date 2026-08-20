@@ -58,7 +58,10 @@ if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
   git checkout -b "$BRANCH" 2>/dev/null || git checkout "$BRANCH"
 fi
 
-git commit -m "notebook: $SLUG"
+if ! git commit -m "notebook: $SLUG"; then
+  echo ""
+  echo "Nothing new to commit for $SLUG -- re-checking your last submission."
+fi
 
 PUSHED=0
 if git push -u origin "$BRANCH" 2>/dev/null; then
