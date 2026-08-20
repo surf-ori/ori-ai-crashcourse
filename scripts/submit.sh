@@ -43,6 +43,24 @@ fi
 echo "Nothing suspicious found."
 echo ""
 
+if command -v uvx >/dev/null 2>&1; then
+  echo "Checking your notebook can actually run (uvx marimo check)..."
+  if ! uvx marimo check "$NOTEBOOK_DIR/notebook.py"; then
+    git reset -- "$NOTEBOOK_DIR" >/dev/null
+    echo ""
+    echo "STOP: marimo check found problems above -- this notebook would break"
+    echo "for whoever opens it next. Ask your agent to fix them, then run this"
+    echo "script again."
+    exit 1
+  fi
+  echo "Notebook checks out."
+  echo ""
+else
+  echo "uvx not found -- skipping the marimo check step. Ask your agent to run"
+  echo "'uvx marimo check $NOTEBOOK_DIR/notebook.py' by hand before submitting."
+  echo ""
+fi
+
 GITHUB_HANDLE=$(gh api user --jq .login 2>/dev/null || true)
 if [ -z "$GITHUB_HANDLE" ]; then
   GITHUB_HANDLE=$(git config user.name 2>/dev/null | tr '[:upper:] ' '[:lower:]-' || true)
