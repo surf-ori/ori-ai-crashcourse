@@ -105,6 +105,24 @@ If marimo printed a different port than 2718 (it picks a free one if
 2718 is already taken by something else), publish and use that port
 instead throughout.
 
+**All three steps above check out, `sbx ports` lists 2718 as published,
+`curl` from inside the sandbox works fine — and it *still* won't load**
+The published port rule can go stale if your sandbox got recreated at
+some point in the session (after a Ctrl-C kill, an idle timeout, or
+anything else that replaced the container) — `sbx ports` keeps listing
+it as configured, but it's no longer actually wired to the *current*
+container's network endpoint. Confirmed live as the fix: force it to
+re-resolve by unpublishing and republishing the same port —
+
+```bash
+sbx ports <your-sandbox-name> --unpublish 2718:2718
+sbx ports <your-sandbox-name> --publish 2718:2718
+```
+
+— then reload the browser tab. No need to restart marimo itself for
+this one; if `curl` from inside the sandbox already works, the server's
+fine and this is purely a host-to-container routing fix.
+
 **Ctrl-C to copy the agent's reply quit the whole session instead**
 Don't use Ctrl-C inside the agent, ever — it's the terminal interrupt
 signal, and it can take the **whole sandbox container down**, not just
