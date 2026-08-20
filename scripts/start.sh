@@ -78,11 +78,20 @@ echo ""
 if command -v sbx >/dev/null 2>&1; then
   # 2718 is marimo's default port. --publish only applies when sbx creates
   # a fresh sandbox -- it's silently ignored when re-attaching to one that
-  # already exists (sbx run --help), which is exactly what you want: publish
-  # once at creation, and every later `start.sh` for this same agent+folder
-  # just re-attaches to the same already-published port. If you're on a
-  # sandbox created before this existed, publish it once by hand -- see
-  # docs/troubleshooting.md.
+  # already exists (sbx run --help). Worse, a mapping published earlier in
+  # the session can go stale if the sandbox was recreated since (a Ctrl-C
+  # kill, an idle timeout, etc. -- see docs/troubleshooting.md): `sbx ports`
+  # keeps listing it, but it's no longer wired to the *current* container.
+  # Force it to re-resolve every time, before attaching. sbx's default
+  # sandbox name is <agent>-<workdir-basename> (sbx create --help); this
+  # repo's clone directory is a fixed name from the quickstart's `git
+  # clone`, so this reliably matches. Both calls are harmless no-ops if
+  # the sandbox doesn't exist yet or nothing was published before --
+  # `sbx run --publish` below still covers first-time creation either way.
+  SANDBOX_NAME="${AGENT}-$(basename "$PWD")"
+  sbx ports "$SANDBOX_NAME" --unpublish 2718:2718 >/dev/null 2>&1 || true
+  sbx ports "$SANDBOX_NAME" --publish 2718:2718 >/dev/null 2>&1 || true
+
   exec sbx run --publish 2718:2718 "$AGENT" .
 else
   exec "$AGENT"
