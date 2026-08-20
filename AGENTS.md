@@ -21,7 +21,14 @@ notebook directory from scratch; the template already has the PEP 723
 header, the WASM `micropip` guard, and a working first query wired up.
 
 Slugs are lowercase, hyphenated, no spaces: `dutch-institution-count`, not
-`Dutch Institution Count` or `dutch_institution_count`.
+`Dutch Institution Count` or `dutch_institution_count`. That's an example
+for the format only — it isn't a real notebook. When a participant asks
+to preview, edit, or run "my notebook" without naming a slug, run
+`ls notebooks/` (ignore `_template`) and check what's actually there
+first — don't guess a slug, and don't reuse an example slug from this
+file's own prose as if it were real, which happened live. If there's more
+than one, ask which one, the same way `submit.sh` does when it finds
+multiple candidates.
 
 **You (the agent) start the preview yourself — detached, not as a normal
 foreground command.** A plain `uvx marimo edit ...` tool call gets torn
