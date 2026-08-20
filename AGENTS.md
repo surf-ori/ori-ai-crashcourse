@@ -34,6 +34,37 @@ their own *host* terminal will get `command not found`, since their host
 has no Python tooling installed at all — that's expected, not a bug to
 chase.
 
+## Marimo notebook conventions
+
+Two mistakes have shown up in real submissions, on top of what
+`.claude/skills/marimo-notebook/` already covers:
+
+- **Name every cell.** `def _():` is fine for throwaway experiments in
+  `marimo edit`, but a submitted notebook should read like
+  `notebooks/_template/notebook.py`: `wasm_dependencies`, `imports`,
+  `duckdb_connection`, `dutch_institutions_query`,
+  `dutch_institutions_table`, `outro`. A named cell tells a reviewer what
+  it's for without opening the browser UI, and it makes the `git diff` on
+  a PR legible.
+- **Keep SQL cells pure SQL.** marimo has a native SQL cell --
+  `mo.sql(f"""...""", engine=con, output=False)` -- and it should contain
+  *only* the query. If the query needs to be built from Python (a loop, an
+  `if`, string interpolation beyond a plain f-string), do that in a
+  preceding cell and pass the result in; don't bury Python control flow
+  inside the SQL cell. `notebooks/_template/notebook.py` shows the split:
+  one cell runs the query with `output=False`, the next renders the result
+  with `mo.ui.table()` or a chart.
+
+Before calling a notebook done, run `uvx marimo check <notebook.py>` and
+`uv run <notebook.py>` yourself -- don't just read the diff and assume it
+works. `marimo check` catches things like a `MultipleDefinitionError` (the
+same un-prefixed variable name, e.g. `chart`, assigned in two different
+cells -- prefix cell-local names you don't need to return with `_`) and a
+dangling `if` branch whose expression never renders, both instantly and
+both before a participant or reviewer ever opens the file. `scripts/submit.sh`
+now also runs `marimo check` as a submission gate, but that's a backstop,
+not a substitute for checking your own work as you go.
+
 ## Skills live in `.claude/skills/`, and only there
 
 This is a deliberate departure from `.agents/skills/`, which sibling repos
@@ -52,6 +83,14 @@ working setup for no reason. Don't.
 Skills were vendored once, via `npx skills add <source> --agent claude-code
 --copy --yes`, and are tracked in git — not fetched at install time. See
 `skills-lock.json` for provenance (source repo, hash) of each one.
+
+`duckdb-fundamentals` is the one deliberate exception: it's hand-written,
+not vendored, and has no `skills-lock.json` entry. `duckdb/duckdb-skills`
+(the obvious upstream source) is built around a standalone `duckdb` CLI
+binary on `PATH` — its `install-duckdb` skill's whole job is installing
+that binary, which conflicts with this repo's uvx-only, nothing-on-PATH
+model. Don't "fix" this one back to a vendored pack without solving that
+mismatch first.
 
 ## Two model lanes, one repo
 
