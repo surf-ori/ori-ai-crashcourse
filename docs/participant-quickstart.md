@@ -164,7 +164,7 @@ You want to see all green:
 ✅ SURF AI Hub key found
 ✅ model responds
 ✅ model can use tools (streaming)
-✅ skills loaded (25)
+✅ skills loaded (26)
 ✅ git and GitHub reachable
 ```
 

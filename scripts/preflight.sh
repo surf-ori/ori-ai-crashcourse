@@ -11,7 +11,7 @@ set -euo pipefail
 # Defaults to opencode. You can also set ORI_AGENT=claude instead of
 # passing an argument.
 
-EXPECTED_SKILLS=25
+EXPECTED_SKILLS=26
 COLD_START_SECONDS=20
 AGENT="${1:-${ORI_AGENT:-opencode}}"
 SANDBOX_NAME="ori-preflight-$$"

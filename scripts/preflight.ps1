@@ -14,7 +14,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ExpectedSkills = 25
+$ExpectedSkills = 26
 $ColdStartSeconds = 20
 if ([string]::IsNullOrEmpty($Agent)) {
     $Agent = if ($env:ORI_AGENT) { $env:ORI_AGENT } else { "opencode" }
