@@ -76,7 +76,10 @@ ORIGIN_URL=$(git remote get-url origin 2>/dev/null || true)
 FORK_OWNER=$(printf '%s' "$ORIGIN_URL" | sed -E 's#^(https://github\.com/|git@github\.com:)([^/]+)/.*#\2#')
 
 if [ "$PUSHED" -eq 1 ] && command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-  gh pr create --fill && exit 0
+  # Pin --repo explicitly: without it, gh either guesses wrong or -- if a
+  # `gh repo set-default` is set for this directory -- opens the PR against
+  # that pinned repo (your fork) instead of the shared upstream repo.
+  gh pr create --fill --repo surf-ori/ori-ai-crashcourse && exit 0
 fi
 
 if [ -n "$FORK_OWNER" ] && [ "$FORK_OWNER" != "surf-ori" ]; then
