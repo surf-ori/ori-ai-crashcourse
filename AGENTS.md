@@ -32,7 +32,7 @@ started detached, died within seconds as a normal foreground call. Always
 use this exact pattern, with the port pinned:
 
 ```bash
-setsid nohup uvx marimo edit --sandbox --watch --headless --port 2718 \
+setsid nohup uvx marimo edit --sandbox --watch --headless --host 0.0.0.0 --port 2718 \
   notebooks/<slug>/notebook.py > /tmp/marimo-preview.log 2>&1 < /dev/null &
 disown
 sleep 5
@@ -47,15 +47,30 @@ cat /tmp/marimo-preview.log
   not from the participant's actual browser, since only 2718 is
   published. This happened live: asked generically to "run the marimo
   notebook," the agent picked port 8000.
+- **`--host 0.0.0.0` is required, not optional.** marimo's default
+  (`--host 127.0.0.1`) only listens on the sandbox's own loopback
+  interface, which the host's published port can't reach at all —
+  confirmed live as `ERR_CONNECTION_REFUSED` from the participant's
+  browser even with the port correctly published. `0.0.0.0` makes it
+  listen on every interface inside the sandbox instead.
 - **Check before starting a new one.** `curl -sfI http://localhost:2718/
   >/dev/null 2>&1` tells you if something's already listening. If it's
   serving the same notebook, don't start a second instance — `--watch`
   already picks up file edits on its own, so just tell the participant to
   keep using their existing tab. If it's stale (a different notebook, or
   left over from an earlier turn), `pkill -f "marimo edit"` first.
-- **Give the participant the full URL from the log, including
-  `?access_token=...`.** marimo requires that token; a bare
-  `http://localhost:2718` redirects to a login page instead of the
+- **Give the participant `http://127.0.0.1:2718/?access_token=...`, not
+  `localhost` and not the `0.0.0.0` or `Network: http://172....` lines
+  marimo itself prints.** Those two are unusable from the participant's
+  browser — `0.0.0.0` is a wildcard bind address, not a real address to
+  connect to, and the `Network` line is the sandbox's own private
+  container IP, unreachable from the host. Swap in `127.0.0.1` and keep
+  the port and token marimo printed. Confirmed live: `localhost` failed
+  with `ERR_CONNECTION_RESET` (it resolved to the sandbox's IPv6 published
+  port first, which nothing was listening on the way it was actually
+  reached); `127.0.0.1` on the same running server worked immediately.
+  The token in the URL is required either way — a bare
+  `http://127.0.0.1:2718` redirects to a login page instead of the
   notebook.
 
 Nothing in the sandbox has `marimo` on `PATH` directly; it only exists as

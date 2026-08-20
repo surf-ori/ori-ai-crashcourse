@@ -65,22 +65,45 @@ want a clean check — delete the cache file and `start.sh` will run
 rm .ori-preflight
 ```
 
-**`uvx marimo edit --sandbox --watch notebooks/<slug>/notebook.py` prints
-a `localhost` URL, but it won't load in your host browser**
-The preview server runs inside your sandbox, not on your host machine, so
-`localhost:2718` means the sandbox's own loopback — your host has no idea
-that port exists yet. Publish it from a **second terminal on your host**
-(not inside the sandbox session where the agent is running):
+**A marimo preview URL doesn't load in your host browser**
+Three separate things all have to be true at once for this to work, and a
+live test needed all three before it actually loaded. If your agent is
+starting the preview per `AGENTS.md`, it already knows all of this — this
+is for when you (or a facilitator, per `facilitator-guide.md`) run
+`marimo edit`/`marimo run` by hand instead.
 
-```bash
-sbx ports <your-sandbox-name> --publish 2718:2718
-```
+1. **The port needs to be published from your sandbox to your host.**
+   `start.sh` does this automatically now (`sbx run --publish 2718:2718`),
+   but only for a *newly created* sandbox — an existing one from before
+   this was added won't have it. Fix from a **second terminal on your
+   host** (not inside the sandbox session):
+   ```bash
+   sbx ports <your-sandbox-name> --publish 2718:2718
+   ```
+   Find `<your-sandbox-name>` from inside the sandbox with
+   `echo $SANDBOX_VM_ID` or `hostname`. Confirm it worked with
+   `sbx ports <your-sandbox-name>` (no `--publish`) — it should list
+   `2718` for both `127.0.0.1` and `::1`.
 
-Find `<your-sandbox-name>` from inside the sandbox with `echo $SANDBOX_VM_ID`
-or `hostname`. Then reload `http://localhost:2718` in your host browser.
-If marimo printed a different port (it picks a free one if 2718 is taken),
-publish that one instead. This is a one-time step per sandbox session, not
-per notebook.
+2. **marimo needs to listen on more than its own loopback.** Its default
+   is `--host 127.0.0.1`, which only accepts connections from *inside*
+   the sandbox — a published port can't reach it no matter what.
+   `curl http://localhost:2718` from inside the sandbox will look
+   perfectly fine even when this is the problem, since that request
+   never leaves the sandbox. Pass `--host 0.0.0.0` explicitly.
+
+3. **Use `127.0.0.1`, not `localhost`, in your host browser.** On
+   Windows, `localhost` can resolve to the IPv6 loopback (`::1`) first;
+   confirmed live, that produced `ERR_CONNECTION_RESET` even with steps 1
+   and 2 both done correctly, while `127.0.0.1` on the exact same running
+   server worked immediately. Also don't use the `0.0.0.0` or
+   `Network: http://172....` lines marimo itself prints in its startup
+   banner — neither is reachable from your host; swap in `127.0.0.1` and
+   keep marimo's port and `?access_token=...`.
+
+If marimo printed a different port than 2718 (it picks a free one if
+2718 is already taken by something else), publish and use that port
+instead throughout.
 
 **Ctrl-C to copy the agent's reply quit the whole session instead**
 Don't use Ctrl-C inside the agent, ever — it's the terminal interrupt
