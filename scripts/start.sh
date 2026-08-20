@@ -76,7 +76,14 @@ echo "Once inside, type /skills to see what your agent already knows how to do."
 echo ""
 
 if command -v sbx >/dev/null 2>&1; then
-  exec sbx run "$AGENT" .
+  # 2718 is marimo's default port. --publish only applies when sbx creates
+  # a fresh sandbox -- it's silently ignored when re-attaching to one that
+  # already exists (sbx run --help), which is exactly what you want: publish
+  # once at creation, and every later `start.sh` for this same agent+folder
+  # just re-attaches to the same already-published port. If you're on a
+  # sandbox created before this existed, publish it once by hand -- see
+  # docs/troubleshooting.md.
+  exec sbx run --publish 2718:2718 "$AGENT" .
 else
   exec "$AGENT"
 fi

@@ -83,16 +83,22 @@ publish that one instead. This is a one-time step per sandbox session, not
 per notebook.
 
 **Ctrl-C to copy the agent's reply quit the whole session instead**
-Don't use Ctrl-C inside the agent — it's the terminal interrupt signal, and
-it looks like it kills the sandbox attach (`sbx run`) rather than just
-canceling whatever the agent is doing. To copy text, use your terminal's own
+Don't use Ctrl-C inside the agent, ever — it's the terminal interrupt
+signal, and it can take the **whole sandbox container down**, not just
+disconnect your terminal from it. Confirmed live: after Ctrl-C,
+`sbx ports <sandbox-name> --publish ...` on that same sandbox failed with
+`no container endpoint with IP address found` — the container itself was
+gone, not just detached. Treat Ctrl-C here like closing an editor without
+saving, not a safe interrupt. To copy text, use your terminal's own
 selection instead of a keyboard shortcut: in **Git Bash (mintty)**, just
 select text with your mouse — it copies to the clipboard automatically, no
-Ctrl-C needed. If you do get dropped out, run `sbx ls` to find your
-sandbox's name, then `./scripts/start.sh <agent>` again (or
-`sbx run --name <name>`) to reattach — with luck your conversation is still
-there; if not, check `opencode --help` / `claude --help` inside the sandbox
-for the real resume-session flag rather than guessing one.
+Ctrl-C needed. If you do hit it, run `sbx ls` to check whether your
+sandbox is still listed at all. If it's gone, there's no recovery —
+`./scripts/start.sh <agent>` again to create a fresh one (you'll lose that
+conversation; anything already committed to a notebook file on disk
+survives, since that's a filesystem change, not conversation state). If
+it's still listed, try `./scripts/start.sh <agent>` or
+`sbx run --name <name>` to reattach before assuming it's lost.
 
 **`sbx` says my hardware isn't supported / won't install**
 Docker Sandboxes needs macOS on Apple Silicon, Linux x86_64 with KVM, or
