@@ -20,6 +20,8 @@ Everything below this bar still counts as a completed workshop. Meet all four an
 
 An honest half-finished notebook with a clear problem statement beats a polished notebook that answers nothing anyone asked.
 
+**To check the second box, you need to actually run the notebook**, not just read the diff. Each participant's branch lives on their own fork, not in this repo, so pull it down with `gh pr checkout <PR-number>`, then `uvx marimo edit notebooks/<slug>/notebook.py`. See "After the session" in `facilitator-guide.md` for the full walkthrough.
+
 ---
 
 ## The five criteria
