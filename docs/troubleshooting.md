@@ -50,6 +50,21 @@ and run the command there instead. `preflight.ps1` is the only script with a
 PowerShell equivalent — `start.sh`, `submit.sh`, and `new-notebook.sh` need
 Git Bash (or WSL2).
 
+**`./scripts/start.sh` says "Setup already checked on ..." and skips the
+preflight check, but you want it to actually re-run**
+`start.sh` caches a passing preflight in `.ori-preflight` (a plain
+`KEY=VALUE` file in the repo root, not committed) so you don't sit through
+the ~2-4 minute check every single time you start a session. It only
+skips when the cached agent matches the one you're starting with. If your
+setup changed since that file was written — you rotated a key, recreated
+the sandbox, switched networks, or you're just seeing something weird and
+want a clean check — delete the cache file and `start.sh` will run
+`preflight.sh` for real again:
+
+```bash
+rm .ori-preflight
+```
+
 **Ctrl-C to copy the agent's reply quit the whole session instead**
 Don't use Ctrl-C inside the agent — it's the terminal interrupt signal, and
 it looks like it kills the sandbox attach (`sbx run`) rather than just

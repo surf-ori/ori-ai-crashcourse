@@ -21,3 +21,4 @@ uv.lock
 
 # Local machine state
 .ori-agent
+.ori-preflight
