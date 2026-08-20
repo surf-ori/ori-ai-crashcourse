@@ -111,8 +111,11 @@ The published port rule can go stale if your sandbox got recreated at
 some point in the session (after a Ctrl-C kill, an idle timeout, or
 anything else that replaced the container) — `sbx ports` keeps listing
 it as configured, but it's no longer actually wired to the *current*
-container's network endpoint. Confirmed live as the fix: force it to
-re-resolve by unpublishing and republishing the same port —
+container's network endpoint. `start.sh` now does an unpublish/republish
+cycle every time it runs, before attaching, specifically to guard against
+this — so this shouldn't come up from a normal `./scripts/start.sh`
+anymore. If you're re-attaching some other way (`sbx run --name ...`
+directly), force it to re-resolve by hand —
 
 ```bash
 sbx ports <your-sandbox-name> --unpublish 2718:2718
