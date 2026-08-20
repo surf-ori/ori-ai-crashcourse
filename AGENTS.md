@@ -23,16 +23,61 @@ header, the WASM `micropip` guard, and a working first query wired up.
 Slugs are lowercase, hyphenated, no spaces: `dutch-institution-count`, not
 `Dutch Institution Count` or `dutch_institution_count`.
 
-When telling the participant how to preview their notebook, always say
-`uvx marimo edit --sandbox --watch notebooks/<slug>/notebook.py`, for
-**them** to run in their own sandbox session — never bare `marimo edit
-...`, and don't run it yourself via your own shell tool (it starts a
-long-running server and would just hang the tool call). Nothing in the
-sandbox has `marimo` on `PATH` directly; it only exists as a
-`uvx`-managed ephemeral install driven by the PEP 723 header. A
-participant who copies a bare `marimo edit` command into their own *host*
-terminal will get `command not found`, since their host has no Python
-tooling installed at all — that's expected, not a bug to chase.
+**You (the agent) start the preview yourself — detached, not as a normal
+foreground command.** A plain `uvx marimo edit ...` tool call gets torn
+down the moment your tool call returns, even though it prints a URL
+first — the server dies silently a few seconds later and the participant
+gets a dead link. Verified live: identical command and flags, worked when
+started detached, died within seconds as a normal foreground call. Always
+use this exact pattern, with the port pinned:
+
+```bash
+setsid nohup uvx marimo edit --sandbox --watch --headless --host 0.0.0.0 --port 2718 \
+  notebooks/<slug>/notebook.py > /tmp/marimo-preview.log 2>&1 < /dev/null &
+disown
+sleep 5
+cat /tmp/marimo-preview.log
+```
+
+- **Pin `--port 2718` every time.** `start.sh` publishes port 2718 from
+  the sandbox to the participant's host automatically
+  (`sbx run --publish 2718:2718`). Left unpinned, marimo picks a
+  different free port whenever 2718 happens to be busy — the server is
+  still reachable from *inside* the sandbox (so `curl` looks fine), but
+  not from the participant's actual browser, since only 2718 is
+  published. This happened live: asked generically to "run the marimo
+  notebook," the agent picked port 8000.
+- **`--host 0.0.0.0` is required, not optional.** marimo's default
+  (`--host 127.0.0.1`) only listens on the sandbox's own loopback
+  interface, which the host's published port can't reach at all —
+  confirmed live as `ERR_CONNECTION_REFUSED` from the participant's
+  browser even with the port correctly published. `0.0.0.0` makes it
+  listen on every interface inside the sandbox instead.
+- **Check before starting a new one.** `curl -sfI http://localhost:2718/
+  >/dev/null 2>&1` tells you if something's already listening. If it's
+  serving the same notebook, don't start a second instance — `--watch`
+  already picks up file edits on its own, so just tell the participant to
+  keep using their existing tab. If it's stale (a different notebook, or
+  left over from an earlier turn), `pkill -f "marimo edit"` first.
+- **Give the participant `http://127.0.0.1:2718/?access_token=...`, not
+  `localhost` and not the `0.0.0.0` or `Network: http://172....` lines
+  marimo itself prints.** Those two are unusable from the participant's
+  browser — `0.0.0.0` is a wildcard bind address, not a real address to
+  connect to, and the `Network` line is the sandbox's own private
+  container IP, unreachable from the host. Swap in `127.0.0.1` and keep
+  the port and token marimo printed. Confirmed live: `localhost` failed
+  with `ERR_CONNECTION_RESET` (it resolved to the sandbox's IPv6 published
+  port first, which nothing was listening on the way it was actually
+  reached); `127.0.0.1` on the same running server worked immediately.
+  The token in the URL is required either way — a bare
+  `http://127.0.0.1:2718` redirects to a login page instead of the
+  notebook.
+
+Nothing in the sandbox has `marimo` on `PATH` directly; it only exists as
+a `uvx`-managed ephemeral install driven by the PEP 723 header — this is
+also why a participant who copies a bare `marimo edit` command into their
+own *host* terminal gets `command not found`: their host has no Python
+tooling installed at all, that's expected, not a bug to chase.
 
 **`--sandbox` is not optional.** `uvx marimo edit` launches `marimo`
 itself in an ephemeral environment containing only marimo's own
@@ -52,14 +97,17 @@ that browser tab open" while you edit cells for them; see
 `docs/participant-quickstart.md` Step 4 for how this fits into the
 build loop.
 
-When you finish building or changing a notebook, always close with: how
-to preview it (the command above), that they can ask you for further
-changes by naming the cell ("change the query in `dutch_institutions_query`
-to..." — this is exactly why every cell has a name), that
-`uvx marimo run --sandbox notebooks/<slug>/notebook.py` shows the
-no-code "app mode" view (what a reader actually sees, useful for a final
-check before submitting), and that `./scripts/submit.sh <slug>` is the
-next step once they're happy with it. Don't just say "Done!" and stop —
+When you finish building or changing a notebook, start the preview
+yourself (the detached command above) if it isn't already running, and
+close with: the full URL including the access token, that they can ask
+you for further changes by naming the cell ("change the query in
+`dutch_institutions_query` to..." — this is exactly why every cell has a
+name) and just refresh the tab, that they can ask for "app mode" (the
+no-code, read-only view a reader would actually see) and you'll `pkill -f
+"marimo edit"` and restart the same detached command with `marimo run`
+instead of `marimo edit` on the same port — swap back to `edit` the same
+way if they want to keep building — and that `./scripts/submit.sh <slug>`
+is the next step once they're happy with it. Don't just say "Done!" and stop —
 the participant may not know the loop continues.
 
 ## Marimo notebook conventions
