@@ -269,6 +269,26 @@ of an agentic conversation over a streaming connection, which is how both
 OpenCode and Claude Code actually talk to it. Retrying won't fix a model
 that structurally can't stream tool calls. Contact the facilitator.
 
+### Preflight looks frozen, or takes 10+ minutes overall
+
+The whole script prints a spinner with elapsed seconds on any step that
+takes a while (starting the sandbox, waiting on the model), so no output
+moving for a bit is expected — it's not the same as frozen. Press `v` at
+any point during a slow step to switch that spinner to showing the actual
+command output instead. If you're piping preflight's output to a file or
+running it via `start.sh` (which redirects to `.ori-preflight.log`), you
+won't see the spinner at all — instead it prints a plain status line every
+15 seconds so the log doesn't fill up with redraw frames; that's normal
+too, `tail -f` the log if you want to watch it live.
+
+Two things are still allowed to be slow for real reasons: a cold model can
+take up to 4 minutes to answer (see below), and a first-ever sandbox can
+take a few minutes to pull its VM image. Sandbox creation is capped at 10
+minutes — if it's still not done by then, preflight kills it and prints
+whatever it managed to capture, rather than hanging forever. If you hit
+that cap, it's worth flagging: something is likely actually broken (a
+stalled download, a stuck daemon), not just slow.
+
 ### Model takes two to four minutes to answer the first time
 
 Normal. On-demand models spin up on first use — this can take up to four
