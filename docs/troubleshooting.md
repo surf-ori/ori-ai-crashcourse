@@ -39,6 +39,21 @@ at the end. `./scripts/preflight.sh` checks for this now ("git can reach
 GitHub from inside the sandbox") — if you see it fail there, this is the
 fix, before you even start building.
 
+**`./scripts/preflight.sh` (or any other script) fails with `zsh: permission
+denied` or `bash: permission denied` on macOS or Linux**
+The script file lost its executable bit — this can happen if you downloaded
+the repo as a ZIP instead of `git clone`-ing it, or copied the folder
+somewhere rather than cloning fresh. Fix it once, from the repo root:
+
+```bash
+chmod +x scripts/*.sh
+```
+
+Then run the script again. If you cloned with `git clone` and still hit
+this, something stripped the executable bit on the way to your laptop
+(some corporate file-sync tools do this) — the `chmod` above still fixes
+it either way.
+
 **On Windows, running `./scripts/preflight.sh` pops up "How do you want to
 open this file?"**
 You're typing the command into PowerShell or cmd — neither can run bash

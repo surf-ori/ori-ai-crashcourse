@@ -17,6 +17,7 @@ Do this at least a few days ahead. If it does not work, you have time to ask. If
 
 - A laptop you can install software on
 - A GitHub account ([sign up free](https://github.com/signup))
+- A Docker account ([sign up free](https://app.docker.com/signup)) — `sbx login` in Step 1 needs one to authenticate the sandbox. Docker's sign-up page usually offers a "Continue with GitHub" button; if you see it, use that and you won't need a second password.
 - The API key sent to you by email. It expires on the date in that email.
 
 ## Which AI agent?
@@ -58,26 +59,76 @@ newgrp kvm
 sbx login
 ```
 
-**Windows 11:** follow the install instructions at https://docs.docker.com/ai/sandboxes/ then run `sbx login`.
+**Windows 11:** this takes about five steps. Go slowly and do each one in
+order — most workshop participants are on Windows and have never used a
+command line before, so nothing here is assumed.
 
-`sbx login` opens your browser and asks you to sign in to Docker. It is free. It happens once.
+1. Press the **Windows key + S** to open search, type `powershell`, and
+   look at the result named "Windows PowerShell".
+2. Right-click it and choose **"Run as administrator"**. Click **Yes** on
+   the prompt that follows.
+3. **If "Run as administrator" is greyed out, or you don't have an admin
+   password to enter** — your laptop is managed by your institution's IT
+   and you cannot install software on it. Stop here and use the
+   browser-based Codespaces fallback instead: open
+   https://github.com/codespaces and click "Code" → "Codespaces" → "Create
+   codespace" on the workshop repo (see
+   [`docs/troubleshooting.md`](troubleshooting.md) for details, under
+   "`sbx` says my hardware isn't supported"). That path needs no admin
+   rights and no local install at all.
+4. In the blue admin PowerShell window that opened, type each of these
+   three lines **one at a time**, pressing Enter after each and waiting for
+   it to finish before typing the next:
 
-When it asks about a network policy, choose **Open** for this workshop.
+   ```powershell
+   Enable-WindowsOptionalFeature -Online -FeatureName HypervisorPlatform -All
+   ```
 
-**Windows 11 also needs a bash shell — this is not optional.** Every script in
-this repo (`preflight.sh`, `start.sh`, `submit.sh`, `new-notebook.sh`) is a
-bash script. PowerShell and cmd cannot run them; if you type
+   ```powershell
+   winget install -h Docker.sbx
+   ```
+
+   ```powershell
+   sbx login
+   ```
+
+   If Windows asks you to restart the computer after the first command, do
+   so, then reopen an admin PowerShell window (steps 1 to 2) and continue
+   from the `winget install` line.
+
+   `sbx login` opens your browser and asks you to sign in with the Docker
+   account from [What you need](#what-you-need) above. It is free and
+   happens once. When it asks about a network policy, choose **Open** for
+   this workshop.
+
+5. Close the admin PowerShell window — you won't need admin rights again.
+   Every remaining command in this guide runs in an ordinary, non-admin
+   window called **Git Bash**, which you install next.
+
+**Every script in this repo is a bash script, not a PowerShell script —
+this is not optional.** `preflight.sh`, `start.sh`, `submit.sh`, and
+`new-notebook.sh` cannot run in PowerShell or cmd. If you type
 `./scripts/preflight.sh` into PowerShell, Windows will pop up a "How do you
 want to open this file?" dialog instead of running it — that dialog means
 you're in the wrong shell, not that anything is broken.
 
-Install [Git for Windows](https://git-scm.com/downloads/win) — it bundles
-**Git Bash**. Then, for every command below, open a *Git Bash* window
-specifically (Start menu → "Git Bash", or right-click inside the repo folder
-in File Explorer → "Git Bash Here") rather than typing into PowerShell or
-cmd. A PowerShell port exists only for `preflight.ps1`; the other three
-scripts have no PowerShell equivalent, so Git Bash is the one shell that
-gets you through the whole workshop.
+**Install Git Bash:**
+
+1. Go to https://git-scm.com/downloads/win and download the installer (it
+   auto-detects 64-bit).
+2. Run the downloaded `.exe`. Click "Next" through every screen, keeping
+   the defaults — you do not need to change any option. Click "Install",
+   then "Finish".
+3. From now on, whenever this guide says to run a command, open **Git
+   Bash** specifically — not PowerShell, not cmd. Two ways to open it:
+   - Press **Windows key + S**, type `git bash`, and open it, or
+   - In File Explorer, open the `ori-ai-crashcourse` folder (once you have
+     it — see Step 2 below), right-click inside it, and choose **"Git Bash
+     Here"**.
+
+   A PowerShell port exists only for `preflight.ps1`; the other three
+   scripts have no PowerShell equivalent, so Git Bash is the one shell that
+   gets you through the whole workshop.
 
 ## Step 2: Fork and clone the workshop repository
 
@@ -172,7 +223,7 @@ You want to see all green:
 
 **If the model check takes two to four minutes, that is normal.** The model is loaded on demand and has to start up. Run the check a second time and it should answer in a couple of seconds. Only worry if it fails outright.
 
-If anything is ❌, check `docs/troubleshooting.md` first, then reply with the error text. Do not silently give up; there is a browser fallback that always works.
+If anything is ❌, check [`docs/troubleshooting.md`](troubleshooting.md) first, then reply with the error text. Do not silently give up; there is a browser fallback that always works.
 
 ---
 
@@ -219,7 +270,7 @@ The "so that" is what turns a topic into a question. Examples across the range:
 - "…an overview of our international co-publication partners by country over time, so that leadership has a factual base for a knowledge security conversation."
 - "…how our open access share compares to the other Dutch universities, so that I can brief our library director before the UKB meeting."
 
-All of these are welcome. `docs/ideas.md` has twelve ready-made ones across the same three tiers. Taking one from the list is completely fine.
+All of these are welcome. [`docs/ideas.md`](ideas.md) has twelve ready-made ones across the same three tiers. Taking one from the list is completely fine.
 
 **One note if you are working on knowledge security, research integrity or performance.** Keep it aggregate: institution, country, faculty, year. Not named researchers. These notebooks end up in a public repository, and a risk score attached to a person is a very different object from a count, whatever the underlying data. Ask the facilitator if you are unsure.
 
@@ -261,7 +312,7 @@ Talk to the agent. Some things that work well:
 | "Make it better" | "Run the notebook and show me the error." |
 | Nothing, when lost | "Explain what this cell does, in plain language." |
 
-**Watch it update live.** Ask the agent to *"start the marimo preview"* — it handles the details and gives you back a URL (it'll include a `?access_token=...` part; use the whole thing, not just the short version). Open that in your browser and leave the tab up. From then on, every cell in the notebook has a name (`dutch_institutions_query`, `funding_chart`, and so on), so you can say *"change the query in the `funding_chart` cell to sort by year instead"* and the agent edits the file directly — the tab reloads on its own the moment the file changes, no copy-pasting code back and forth. This runs inside your sandbox; if the URL doesn't load in your host browser, see `docs/troubleshooting.md`.
+**Watch it update live.** Ask the agent to *"start the marimo preview"* — it handles the details and gives you back a URL (it'll include a `?access_token=...` part; use the whole thing, not just the short version). Open that in your browser and leave the tab up. From then on, every cell in the notebook has a name (`dutch_institutions_query`, `funding_chart`, and so on), so you can say *"change the query in the `funding_chart` cell to sort by year instead"* and the agent edits the file directly — the tab reloads on its own the moment the file changes, no copy-pasting code back and forth. This runs inside your sandbox; if the URL doesn't load in your host browser, see [`docs/troubleshooting.md`](troubleshooting.md).
 
 **See what a reader would see.** The editor view always shows you the code alongside the output — useful while building, but not what you're actually shipping. Ask the agent *"show me app mode"* to switch the preview to the no-code, read-only view — the same thing your exported HTML/WASM dashboard will look like. Good final check before Step 5: if a heading is missing or a chart has no axis labels, this is where you'll notice.
 
@@ -296,7 +347,7 @@ If that script fails, open a GitHub issue using the "Workshop idea" template and
 
 **Where to go next:**
 
-- `docs/ideas.md` for more problems worth solving
+- [`docs/ideas.md`](ideas.md) for more problems worth solving
 - The DuckLake browser view: https://surf-ori.github.io/sprouts/
 - Write your own skill: ask your agent, "use the writing-skills skill to help me write a skill for \_\_\_\_"
 
@@ -311,4 +362,4 @@ If that script fails, open a GitHub issue using the "Workshop idea" template and
 | Skills you have | `/skills` inside your agent |
 | Install a skill | `npx skills add owner/repo --agent claude-code --copy --yes` |
 | Preview a notebook | `uvx marimo edit --sandbox --watch notebooks/<name>/notebook.py` |
-| Something broke | `docs/troubleshooting.md` |
+| Something broke | [`docs/troubleshooting.md`](troubleshooting.md) |
