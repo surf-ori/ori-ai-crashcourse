@@ -223,6 +223,10 @@ You want to see all green:
 
 **If the model check takes two to four minutes, that is normal.** The model is loaded on demand and has to start up. Run the check a second time and it should answer in a couple of seconds. Only worry if it fails outright.
 
+**The whole check can take several minutes — a spinner with elapsed time
+shows it's still working, not frozen.** Press `v` at any point during a
+slow step to switch it to showing live detail instead of just a spinner.
+
 If anything is ❌, check [`docs/troubleshooting.md`](troubleshooting.md) first, then reply with the error text. Do not silently give up; there is a browser fallback that always works.
 
 ---
