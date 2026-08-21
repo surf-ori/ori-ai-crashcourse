@@ -87,6 +87,8 @@ starting the preview per `AGENTS.md`, it already knows all of this — this
 is for when you (or a facilitator, per `facilitator-guide.md`) run
 `marimo edit`/`marimo run` by hand instead.
 
+**Path A: fix the sandbox-to-host connection.** Three things, all required:
+
 1. **The port needs to be published from your sandbox to your host.**
    `start.sh` does this automatically now (`sbx run --publish 2718:2718`),
    but only for a *newly created* sandbox — an existing one from before
@@ -119,6 +121,39 @@ is for when you (or a facilitator, per `facilitator-guide.md`) run
 If marimo printed a different port than 2718 (it picks a free one if
 2718 is already taken by something else), publish and use that port
 instead throughout.
+
+**Path B: skip the sandbox networking entirely — run marimo on your host.**
+Your repo folder lives on your host laptop; the sandbox mounts it, it
+doesn't copy it. So the notebook file the agent is editing inside the
+sandbox is the exact same file on your host disk, and you don't have to
+preview it through the sandbox's network at all. Open a **second terminal
+on your host** — a plain terminal, not `sbx run` and not the agent
+session — `cd` into the same repo folder, and run:
+
+```bash
+uvx marimo edit --sandbox --watch notebooks/<slug>/notebook.py
+```
+
+(Replace `<slug>` with your notebook's folder name under `notebooks/`.)
+This starts marimo directly on your host's own `localhost` — no port
+publishing, no `--host 0.0.0.0`, no `127.0.0.1`-vs-`localhost` gotcha,
+because nothing crosses the sandbox boundary. The URL it prints just
+works in your browser as-is.
+
+This needs `uv` installed on your **host**, not inside the sandbox — the
+workshop deliberately keeps your host free of Python tooling, so this is
+opt-in only if you want it. Install it once:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh   # macOS/Linux
+```
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"   # Windows
+```
+
+then open a fresh terminal so it picks up the updated `PATH`. If `uvx`
+comes back `command not found` after that, the install didn't complete —
+see https://docs.astral.sh/uv/getting-started/installation/.
 
 ### All three port/host/localhost steps check out and it still won't load
 
