@@ -214,23 +214,64 @@ the proxy.
 
 ### Preflight says the key was rejected, or `SURF_AIHUB_API_KEY` never shows up inside the sandbox
 
-Your `SURF_AIHUB_API_KEY` has either expired, was mistyped, or was set with
-the wrong `sbx` subcommand. This key uses **`sbx secret set-custom`**, not
-plain `sbx secret set` — the SURF AI Hub isn't one of Docker's built-in
-providers (`anthropic`, `github`, `openai`, etc.), so the proxy needs an
-explicit host to match against. If you ever ran `sbx secret set
-SURF_AIHUB_API_KEY` (without `-custom`), that secret is a dead end: it's
-stored, but nothing ever delivers it into a sandbox or matches it to any
-outbound request. Clear it out and redo it correctly:
+**Check this first, before touching the key at all: is it actually the key
+that's rejected, or is your sandbox's network policy blocking the request
+before it ever reaches the AI Hub?** Confirmed live: a participant got
+"model responds ... got 403" with a key that was verified working from a
+different machine — the real cause was that her sandbox's network policy
+was on default-deny, so its own proxy blocked `willma.surf.nl` and handed
+back an HTTP 403 that looked exactly like a rejected key. Check for this
+first:
 
 ```bash
-sbx secret rm SURF_AIHUB_API_KEY
+sbx policy log
+```
+
+If you see `willma.surf.nl` listed under "Blocked requests" with a reason
+like "No matching allow rule (default deny)", that's it — the key was
+never the problem. Fix:
+
+```bash
+sbx policy allow network "**"
+```
+
+This is the "Open" policy `docs/participant-quickstart.md` tells you to
+choose when `sbx login` first asks — if you picked something more
+restrictive there (or it didn't stick), this sets it after the fact.
+Rerun `./scripts/preflight.sh` and move on.
+
+**If `sbx policy log` shows nothing blocked**, then it really is the key:
+either it's expired, was mistyped, or was set with the wrong `sbx`
+subcommand. This key uses **`sbx secret set-custom`**, not plain
+`sbx secret set` — the SURF AI Hub isn't one of Docker's built-in providers
+(`anthropic`, `github`, `openai`, etc.), so the proxy needs an explicit
+host to match against. If you ever ran `sbx secret set SURF_AIHUB_API_KEY`
+(without `-custom`), that secret is a dead end: it's stored, but nothing
+ever delivers it into a sandbox or matches it to any outbound request.
+Clear it out and redo it correctly:
+
+```bash
+sbx secret ls
+```
+
+Find the `SURF_AIHUB_API_KEY` row under "CUSTOM SECRETS" and copy its
+`PLACEHOLDER` value (looks like `sbx-cs-xxxxxxxxxxxxxxxx`) — that's what
+`rm` needs, **not** the env var name. Confirmed live:
+`sbx secret rm SURF_AIHUB_API_KEY` fails with "No secret found for service
+... in scope (global)", because plain `rm <name>` only searches the
+built-in service-secret namespace, not custom secrets.
+
+```bash
+sbx secret rm --placeholder <the-placeholder-value-from-ls> -f
 sbx secret set-custom --host willma.surf.nl --env SURF_AIHUB_API_KEY
 ```
 
-Paste the key fresh from your invitation email — no extra spaces or quotes.
-If it's still rejected after that, the key has likely expired; check the
-date in your invitation email and ask the facilitator for a new one.
+Paste the key fresh from your invitation email — no extra spaces or
+quotes. It should print a **new** placeholder, different from the old one
+— if it prints the same placeholder as before, the removal didn't
+actually happen and you're still on the old value. If it's still rejected
+after a genuinely fresh paste, the key has likely expired; check the date
+in your invitation email and ask the facilitator for a new one.
 
 ### `sbx secret set-custom` shows nothing when I paste — did it work?
 

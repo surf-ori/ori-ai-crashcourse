@@ -29,6 +29,17 @@ fail() { printf '❌ %s\n' "$1"; printf '   %s\n' "$2"; FAILED=1; }
 note() { printf '⚠️  %s\n' "$1"; printf '   %s\n' "$2"; }
 step() { STEP=$((STEP + 1)); printf '\n[%d/%d] %s\n' "$STEP" "$TOTAL_STEPS" "$1"; }
 
+# A 403 from willma.surf.nl can mean two very different things: the AI Hub
+# rejected the key, or the sandbox's own network policy blocked the request
+# before it ever left the sandbox (confirmed live -- a participant's
+# genuinely-working key still 403'd because her policy was on default-deny).
+# The sandbox's own block response is HTTP 403 with a body describing the
+# policy decision, so grep for that shape to tell the two apart.
+looks_like_policy_block() {
+  printf '%s' "$1" | grep -qiE 'blocked by (local rule|org policy)|no matching allow rule|default deny policy'
+}
+POLICY_BLOCK_HINT="Your sandbox's network policy is blocking this request before it reaches the AI Hub -- this isn't about your key. Run 'sbx policy log' to confirm (look for willma.surf.nl under Blocked requests), then 'sbx policy allow network \"**\"' to open it (the same Open policy setup asks for at login), then run this script again."
+
 # Only spin/redraw with \r in a real terminal. When output is redirected to
 # a file (start.sh does this), print an occasional heartbeat line instead --
 # otherwise every redraw frame becomes its own line and the log balloons.
@@ -206,21 +217,27 @@ if [ "$AGENT" = "opencode" ]; then
   step "model responds -- can take up to 4 minutes if the model is cold"
   MODEL_CHECK_START=$(date +%s)
   if run_with_progress "waiting for the model to respond" run_in_sandbox '
-    curl -s -m 300 -o /dev/null -w "%{http_code}" \
+    curl -s -m 300 -w "\nHTTP_CODE:%{http_code}" \
       -H "Authorization: Bearer $SURF_AIHUB_API_KEY" \
       -H "Content-Type: application/json" \
       -d "{\"model\":\"Sehyo/Qwen3.5-122B-A10B-NVFP4\",\"messages\":[{\"role\":\"user\",\"content\":\"reply with the word ok\"}]}" \
       https://willma.surf.nl/api/v0/chat/completions
   '; then
-    HTTP_CODE="$(cat "$PROGRESS_LOG")"
+    MODEL_RAW="$(cat "$PROGRESS_LOG")"
   else
-    HTTP_CODE="000"
+    MODEL_RAW=""
   fi
   rm -f "$PROGRESS_LOG"
   ELAPSED=$(( $(date +%s) - MODEL_CHECK_START ))
+  HTTP_CODE="$(printf '%s' "$MODEL_RAW" | grep -oE 'HTTP_CODE:[0-9]{3}$' | tail -n1 | cut -d: -f2 || true)"
+  HTTP_CODE="${HTTP_CODE:-000}"
+  MODEL_BODY="$(printf '%s' "$MODEL_RAW" | sed 's/HTTP_CODE:[0-9]\{3\}$//')"
 
   if [ "$HTTP_CODE" = "200" ]; then
     pass "model responds"
+  elif looks_like_policy_block "$MODEL_BODY"; then
+    fail "model responds" "$POLICY_BLOCK_HINT"
+    exit 1
   else
     fail "model responds" "The AI Hub did not return 200 (got $HTTP_CODE). Check the key hasn't expired, then see docs/troubleshooting.md."
     exit 1
@@ -253,6 +270,9 @@ if [ "$AGENT" = "opencode" ]; then
 
   if printf '%s' "$TOOLCALL_OUTPUT" | grep -q 'tool_calls'; then
     pass "model can use tools (streaming)"
+  elif looks_like_policy_block "$TOOLCALL_OUTPUT"; then
+    fail "model can use tools (streaming)" "$POLICY_BLOCK_HINT"
+    exit 1
   else
     fail "model can use tools (streaming)" "The model did not return a tool call over a streaming request. This is the check that matters most — contact the facilitator rather than retrying."
     exit 1
