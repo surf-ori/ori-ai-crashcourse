@@ -73,9 +73,9 @@ command line before, so nothing here is assumed.
    browser-based Codespaces fallback instead: open
    https://github.com/codespaces and click "Code" → "Codespaces" → "Create
    codespace" on the workshop repo (see
-   [`docs/troubleshooting.md`](troubleshooting.md) for details, under
-   "`sbx` says my hardware isn't supported"). That path needs no admin
-   rights and no local install at all.
+   [`docs/troubleshooting.md`](troubleshooting.md#sbx-says-my-hardware-isnt-supported--wont-install)
+   for details). That path needs no admin rights and no local install at
+   all.
 4. In the blue admin PowerShell window that opened, type each of these
    three lines **one at a time**, pressing Enter after each and waiting for
    it to finish before typing the next:

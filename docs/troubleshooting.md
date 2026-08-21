@@ -6,8 +6,8 @@ it silently.
 
 ---
 
-**The agent looks frozen the first time you ask a data question — no
-response, no error, nothing**
+### The agent looks frozen the first time you ask a data question — no response, no error, nothing
+
 Normal. The `ori-ducklake` skill fetches and installs its MCP server fresh
 inside your sandbox the first time it's used, and that setup (a `git`
 fetch plus a Python environment install) prints nothing while it runs — it
@@ -19,9 +19,8 @@ than restarting, since restarting just means paying the cost again. If it's
 genuinely still nothing after 5+ minutes, that's worth flagging to the
 facilitator rather than continuing to wait.
 
-**`git clone`/`git fetch`/`git push` inside the sandbox fails with `fatal:
-could not read Username for 'https://github.com': terminal prompts
-disabled`**
+### `git clone`/`git fetch`/`git push` inside the sandbox fails with `fatal: could not read Username for 'https://github.com': terminal prompts disabled`
+
 This happens even cloning a genuinely public repo — it's not about
 permissions on that specific repo. The sandbox's network proxy needs a
 `github` secret configured before *any* git-over-HTTPS traffic works at
@@ -39,8 +38,8 @@ at the end. `./scripts/preflight.sh` checks for this now ("git can reach
 GitHub from inside the sandbox") — if you see it fail there, this is the
 fix, before you even start building.
 
-**`./scripts/preflight.sh` (or any other script) fails with `zsh: permission
-denied` or `bash: permission denied` on macOS or Linux**
+### `./scripts/preflight.sh` (or any other script) fails with `permission denied` on macOS or Linux
+
 The script file lost its executable bit — this can happen if you downloaded
 the repo as a ZIP instead of `git clone`-ing it, or copied the folder
 somewhere rather than cloning fresh. Fix it once, from the repo root:
@@ -54,8 +53,8 @@ this, something stripped the executable bit on the way to your laptop
 (some corporate file-sync tools do this) — the `chmod` above still fixes
 it either way.
 
-**On Windows, running `./scripts/preflight.sh` pops up "How do you want to
-open this file?"**
+### On Windows, running `./scripts/preflight.sh` pops up "How do you want to open this file?"
+
 You're typing the command into PowerShell or cmd — neither can run bash
 scripts, so Windows falls back to asking which app should open the `.sh`
 file. Install [Git for Windows](https://git-scm.com/downloads/win) if you
@@ -65,8 +64,8 @@ and run the command there instead. `preflight.ps1` is the only script with a
 PowerShell equivalent — `start.sh`, `submit.sh`, and `new-notebook.sh` need
 Git Bash (or WSL2).
 
-**`./scripts/start.sh` says "Setup already checked on ..." and skips the
-preflight check, but you want it to actually re-run**
+### `./scripts/start.sh` says "Setup already checked on ..." and skips the preflight check, but you want it to actually re-run
+
 `start.sh` caches a passing preflight in `.ori-preflight` (a plain
 `KEY=VALUE` file in the repo root, not committed) so you don't sit through
 the ~2-4 minute check every single time you start a session. It only
@@ -80,7 +79,8 @@ want a clean check — delete the cache file and `start.sh` will run
 rm .ori-preflight
 ```
 
-**A marimo preview URL doesn't load in your host browser**
+### A marimo preview URL doesn't load in your host browser
+
 Three separate things all have to be true at once for this to work, and a
 live test needed all three before it actually loaded. If your agent is
 starting the preview per `AGENTS.md`, it already knows all of this — this
@@ -120,8 +120,8 @@ If marimo printed a different port than 2718 (it picks a free one if
 2718 is already taken by something else), publish and use that port
 instead throughout.
 
-**All three steps above check out, `sbx ports` lists 2718 as published,
-`curl` from inside the sandbox works fine — and it *still* won't load**
+### All three port/host/localhost steps check out and it still won't load
+
 The published port rule can go stale if your sandbox got recreated at
 some point in the session (after a Ctrl-C kill, an idle timeout, or
 anything else that replaced the container) — `sbx ports` keeps listing
@@ -141,7 +141,8 @@ sbx ports <your-sandbox-name> --publish 2718:2718
 this one; if `curl` from inside the sandbox already works, the server's
 fine and this is purely a host-to-container routing fix.
 
-**Ctrl-C to copy the agent's reply quit the whole session instead**
+### Ctrl-C to copy the agent's reply quit the whole session instead
+
 Don't use Ctrl-C inside the agent, ever — it's the terminal interrupt
 signal, and it can take the **whole sandbox container down**, not just
 disconnect your terminal from it. Confirmed live: after Ctrl-C,
@@ -159,7 +160,8 @@ survives, since that's a filesystem change, not conversation state). If
 it's still listed, try `./scripts/start.sh <agent>` or
 `sbx run --name <name>` to reattach before assuming it's lost.
 
-**`sbx` says my hardware isn't supported / won't install**
+### `sbx` says my hardware isn't supported / won't install
+
 Docker Sandboxes needs macOS on Apple Silicon, Linux x86_64 with KVM, or
 Windows 11 x86_64. Intel Macs and locked-down managed Windows laptops will
 fail here — this is expected, not something to debug further. Use the
@@ -168,14 +170,15 @@ Codespaces fallback instead: open this repo at
 codespace" on GitHub). Same repo, same skills, same agents, no local
 install.
 
-**`sbx login` loops back to the browser / never finishes**
+### `sbx login` loops back to the browser / never finishes
+
 Close the browser tab, run `sbx login` again from a fresh terminal. If it
 loops a second time, check you're not behind a proxy that blocks
 `docker.com` — if you are, use the Codespaces fallback instead of fighting
 the proxy.
 
-**Preflight says the key was rejected, or `SURF_AIHUB_API_KEY` never shows up
-inside the sandbox**
+### Preflight says the key was rejected, or `SURF_AIHUB_API_KEY` never shows up inside the sandbox
+
 Your `SURF_AIHUB_API_KEY` has either expired, was mistyped, or was set with
 the wrong `sbx` subcommand. This key uses **`sbx secret set-custom`**, not
 plain `sbx secret set` — the SURF AI Hub isn't one of Docker's built-in
@@ -194,7 +197,8 @@ Paste the key fresh from your invitation email — no extra spaces or quotes.
 If it's still rejected after that, the key has likely expired; check the
 date in your invitation email and ask the facilitator for a new one.
 
-**`sbx secret set-custom` shows nothing when I paste — did it work?**
+### `sbx secret set-custom` shows nothing when I paste — did it work?
+
 Yes, that's expected: the "Enter secret:" prompt masks input completely, no
 `*` and no cursor movement. It should then print something like `Saved
 custom secret placeholder "sbx-cs-..." for target "willma.surf.nl" env
@@ -205,7 +209,8 @@ placeholder and require restarting any sandbox you already have open. The
 authoritative check either way is `./scripts/preflight.sh` — it fails
 outright on a missing or bad key.
 
-**In a Codespace, a call to `willma.surf.nl` returns curl exit code `000`**
+### In a Codespace, a call to `willma.surf.nl` returns curl exit code `000`
+
 `000` means curl never got a response at all — not an auth failure, a
 connection failure. This can happen if your GitHub organization runs a
 Codespaces network firewall/allowlist that blocks egress to hosts outside a
@@ -216,33 +221,37 @@ facilitator with the exact command and output; it may need your GitHub org
 admin to add `willma.surf.nl` to the Codespaces allowlist, which is outside
 what you can fix from inside the Codespace.
 
-**Preflight says the model isn't responding, or lists it as unavailable**
+### Preflight says the model isn't responding, or lists it as unavailable
+
 The model may not be enabled on your collaboration's AI Hub key, or the
 collaboration's model list changed since this repo was built. Tell the
 facilitator — this needs a change on the AI Hub side, not on your laptop.
 
-**Preflight fails "model can use tools (streaming)" — this is the check
-that matters most**
+### Preflight fails "model can use tools (streaming)" — the check that matters most
+
 Don't just retry. This means the configured model cannot hold up its end
 of an agentic conversation over a streaming connection, which is how both
 OpenCode and Claude Code actually talk to it. Retrying won't fix a model
 that structurally can't stream tool calls. Contact the facilitator.
 
-**Model takes two to four minutes to answer the first time**
+### Model takes two to four minutes to answer the first time
+
 Normal. On-demand models spin up on first use — this can take up to four
 minutes. Preflight will warn you about this ("model was cold") rather than
 fail. Run preflight a second time and it should answer in a couple of
 seconds. If a *second* run is still slow, something is actually wrong —
 then say so.
 
-**A query against `openalex.works` hangs or times out**
+### A query against `openalex.works` hangs or times out
+
 Expected on an unfiltered or lightly filtered query — it's 364 million
 rows. Filter first (by institution, DOI, or year), aggregate second. Never
 `UNNEST` authorships across the full table without a `WHERE` first. Ask
 your agent to run `DESCRIBE` on the table before writing a query against
 an unfamiliar column, rather than guessing a name.
 
-**`uvx marimo export html-wasm` fails**
+### `uvx marimo export html-wasm` fails
+
 Common under time pressure and forgivable — ship the notebook anyway and
 say so honestly in the PR description ("WASM export fails" is useful
 information, not a confession). If you want to chase it: check the
@@ -250,7 +259,8 @@ information, not a confession). If you want to chase it: check the
 `uvx marimo check notebook.py --select MW --format json` to see which
 import or package is the problem.
 
-**`gh` isn't authenticated, so `submit.sh` can't open a PR**
+### `gh` isn't authenticated, so `submit.sh` can't open a PR
+
 Expected in the sbx sandbox lane — the sandbox's proxy authenticates raw
 `git` HTTPS traffic (clone/push) transparently, but not `gh` CLI's own
 separate API login, so `gh pr create` will not fire there. (Codespaces is
@@ -262,7 +272,8 @@ also fails, open the "Workshop idea" issue template from your phone (GitHub
 → Issues → New issue) and paste your notebook contents in. Your idea gets
 captured either way.
 
-**Skills aren't showing up when you type `/skills`**
+### Skills aren't showing up when you type `/skills`
+
 Check `.claude/skills/` in the repo root — that's the one place both
 OpenCode and Claude Code read skills from in this repo. If it's empty or
 missing, your clone is incomplete; re-clone rather than trying to patch it
@@ -270,8 +281,8 @@ by hand. If `.claude/skills/` looks fine but your agent still doesn't see
 them, check you're running the agent from inside the repo directory (skill
 discovery is relative to your working directory).
 
-**`npx skills add` for a new skill lands somewhere your agent doesn't
-read**
+### `npx skills add` for a new skill lands somewhere your agent doesn't read
+
 Always pass all three flags:
 
 ```bash
