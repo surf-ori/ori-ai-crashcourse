@@ -12,8 +12,8 @@ cd ori-ai-crashcourse
 ./scripts/start.sh       # on the day
 ```
 
-New here? Start with `docs/participant-quickstart.md`. Facilitating a
-session? Start with `docs/facilitator-guide.md`.
+New here? Start with [`docs/participant-quickstart.md`](docs/participant-quickstart.md). Facilitating a
+session? Start with [`docs/facilitator-guide.md`](docs/facilitator-guide.md).
 
 ## Agent-agnostic, on purpose
 
@@ -44,7 +44,7 @@ nothing to keep in sync. See `AGENTS.md` for the full rationale.
 
 A [Marimo](https://marimo.io) notebook answering a real question about
 Dutch open research information — data quality, funding, open access,
-international collaboration. `docs/ideas.md` has twelve to start from,
+international collaboration. [`docs/ideas.md`](docs/ideas.md) has twelve to start from,
 across three tiers from operational to leadership-facing. Real examples
 from past sessions: https://surf-ori.github.io/dashboards/
 
@@ -56,4 +56,4 @@ from past sessions: https://surf-ori.github.io/dashboards/
 
 ## If something breaks
 
-`docs/troubleshooting.md` covers the common failure modes, symptom to fix.
+[`docs/troubleshooting.md`](docs/troubleshooting.md) covers the common failure modes, symptom to fix.
